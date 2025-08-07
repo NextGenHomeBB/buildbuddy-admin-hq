@@ -85,8 +85,12 @@ const Login = () => {
                       <label className="text-sm">Email</label>
                       <Input type="email" value={email} onChange={(e)=>setEmail(e.target.value)} placeholder="you@company.com" required />
                     </div>
-                    <Button type="submit" className="w-full">Send magic link</Button>
+                    <Button type="submit" className="w-full">Sign in</Button>
+                    <p className="text-xs text-muted-foreground text-center mt-1">We’ll email you a secure magic link.</p>
                   </form>
+                  <Button variant="outline" type="button" className="w-full mt-2" onClick={() => setTab('signup')}>
+                    Sign up
+                  </Button>
                 </TabsContent>
 
                 <TabsContent value="signup" className="mt-4">
@@ -103,7 +107,8 @@ const Login = () => {
                       <label className="text-sm">Organization</label>
                       <Input value={orgName} onChange={(e)=>setOrgName(e.target.value)} placeholder="Your Company Inc." required />
                     </div>
-                    <Button type="submit" className="w-full">Create account</Button>
+                    <Button type="submit" className="w-full">Sign up</Button>
+                    <p className="text-xs text-muted-foreground text-center mt-1">We’ll email you a secure magic link.</p>
                   </form>
                   <Button variant="outline" type="button" className="w-full mt-2" onClick={() => setTab('signin')}>
                     Sign in
