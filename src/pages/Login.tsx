@@ -16,9 +16,22 @@ const Login = () => {
   const [orgName, setOrgName] = useState("");
   const [sent, setSent] = useState(false);
   const [tab, setTab] = useState<"signin" | "signup">("signin");
+  const [signInMethod, setSignInMethod] = useState<"magic" | "password">("magic");
+  const [signUpWithPassword, setSignUpWithPassword] = useState(false);
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const id = window.setInterval(() => {
+      setResendCooldown((s) => (s > 0 ? s - 1 : 0));
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, [resendCooldown]);
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) navigate('/projects', { replace: true });
@@ -36,26 +49,80 @@ const Login = () => {
     if (error) throw error;
   };
 
+  const handleResend = async () => {
+    if (resendCooldown > 0 || loading) return;
+    try {
+      setLoading(true);
+      await sendMagicLink(email);
+      setResendCooldown(60);
+      toast({ title: "Magic link resent", description: "Check your inbox again." });
+    } catch (err: any) {
+      toast({ title: "Could not resend", description: err.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     try {
-      if (tab === "signup") {
+      if (tab === "signin") {
+        if (signInMethod === "password") {
+          const { error } = await supabase.auth.signInWithPassword({ email, password });
+          if (error) throw error;
+          toast({ title: "Signed in", description: "Welcome back!" });
+          navigate("/projects", { replace: true });
+        } else {
+          await sendMagicLink(email);
+          setSent(true);
+          setResendCooldown(60);
+          toast({ title: "Check your email", description: "We sent you a magic link to continue." });
+        }
+      } else {
         if (!fullName || !orgName) {
           toast({ title: "Missing info", description: "Please enter your name and organization.", variant: "destructive" });
           return;
         }
         localStorage.setItem('signup_full_name', fullName);
         localStorage.setItem('signup_org_name', orgName);
-      }
 
-      await sendMagicLink(email);
-      setSent(true);
-      toast({ title: "Check your email", description: "We sent you a magic link to continue." });
+        if (signUpWithPassword) {
+          if (!password || password.length < 6) {
+            toast({ title: "Weak password", description: "Use at least 6 characters.", variant: "destructive" });
+            return;
+          }
+          if (password !== confirmPassword) {
+            toast({ title: "Passwords do not match", description: "Please re-enter them.", variant: "destructive" });
+            return;
+          }
+          const redirectUrl = `${window.location.origin}/projects`;
+          const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: { emailRedirectTo: redirectUrl, data: { full_name: fullName, org_name: orgName } }
+          });
+          if (error) throw error;
+          if (data.session) {
+            toast({ title: "Account created", description: "You're all set!" });
+            navigate("/projects", { replace: true });
+          } else {
+            setSent(true);
+            setResendCooldown(60);
+            toast({ title: "Confirm your email", description: "We sent you a confirmation link." });
+          }
+        } else {
+          await sendMagicLink(email);
+          setSent(true);
+          setResendCooldown(60);
+          toast({ title: "Check your email", description: "We sent you a magic link to continue." });
+        }
+      }
     } catch (err: any) {
       toast({ title: "Request failed", description: err.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
     }
   };
-
   return (
     <AppLayout>
       <Seo title="BuildBuddy — Login & Sign up" description="Sign in or sign up to BuildBuddy with a magic link." canonical="/login" />
@@ -71,7 +138,17 @@ const Login = () => {
           </CardHeader>
           <CardContent>
             {sent ? (
-              <p className="text-sm text-muted-foreground">We sent a magic link to {email}. You can close this tab.</p>
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">We sent a magic link to {email}. Open it on this device to continue.</p>
+                <div className="flex gap-2">
+                  <Button className="flex-1" type="button" onClick={handleResend} disabled={resendCooldown > 0 || loading}>
+                    {resendCooldown > 0 ? `Resend (${resendCooldown}s)` : "Resend magic link"}
+                  </Button>
+                  <Button variant="outline" type="button" className="flex-1" onClick={() => setSent(false)}>
+                    Back
+                  </Button>
+                </div>
+              </div>
             ) : (
               <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
                 <TabsList className="grid grid-cols-2 w-full">
@@ -85,12 +162,27 @@ const Login = () => {
                       <label className="text-sm">Email</label>
                       <Input type="email" value={email} onChange={(e)=>setEmail(e.target.value)} placeholder="you@company.com" required />
                     </div>
-                    <Button type="submit" className="w-full">Sign in</Button>
-                    <p className="text-xs text-muted-foreground text-center mt-1">We’ll email you a secure magic link.</p>
+                    {signInMethod === "password" && (
+                      <div>
+                        <label className="text-sm">Password</label>
+                        <Input type="password" value={password} onChange={(e)=>setPassword(e.target.value)} placeholder="Your password" required />
+                      </div>
+                    )}
+                    <Button type="submit" className="w-full" disabled={loading}>
+                      {signInMethod === "password" ? "Sign in" : "Send magic link"}
+                    </Button>
+                    {signInMethod === "magic" && (
+                      <p className="text-xs text-muted-foreground text-center mt-1">We’ll email you a secure magic link.</p>
+                    )}
                   </form>
-                  <Button variant="outline" type="button" className="w-full mt-2" onClick={() => setTab('signup')}>
-                    Sign up
-                  </Button>
+                  <div className="flex flex-col gap-2 mt-2">
+                    <Button variant="outline" type="button" className="w-full" onClick={() => setTab('signup')}>
+                      Sign up
+                    </Button>
+                    <Button variant="ghost" type="button" className="w-full text-sm text-muted-foreground" onClick={() => setSignInMethod(signInMethod === "magic" ? "password" : "magic")}>
+                      {signInMethod === "magic" ? "Use password instead" : "Use magic link instead"}
+                    </Button>
+                  </div>
                 </TabsContent>
 
                 <TabsContent value="signup" className="mt-4">
@@ -107,12 +199,33 @@ const Login = () => {
                       <label className="text-sm">Organization</label>
                       <Input value={orgName} onChange={(e)=>setOrgName(e.target.value)} placeholder="Your Company Inc." required />
                     </div>
-                    <Button type="submit" className="w-full">Sign up</Button>
-                    <p className="text-xs text-muted-foreground text-center mt-1">We’ll email you a secure magic link.</p>
+
+                    {signUpWithPassword && (
+                      <>
+                        <div>
+                          <label className="text-sm">Password</label>
+                          <Input type="password" value={password} onChange={(e)=>setPassword(e.target.value)} placeholder="Create a password" required />
+                        </div>
+                        <div>
+                          <label className="text-sm">Confirm password</label>
+                          <Input type="password" value={confirmPassword} onChange={(e)=>setConfirmPassword(e.target.value)} placeholder="Re-enter password" required />
+                        </div>
+                      </>
+                    )}
+
+                    <Button type="submit" className="w-full" disabled={loading}>Sign up</Button>
+                    <p className="text-xs text-muted-foreground text-center mt-1">
+                      {signUpWithPassword ? "You may need to confirm your email after signup." : "We’ll email you a secure magic link."}
+                    </p>
                   </form>
-                  <Button variant="outline" type="button" className="w-full mt-2" onClick={() => setTab('signin')}>
-                    Sign in
-                  </Button>
+                  <div className="flex flex-col gap-2 mt-2">
+                    <Button variant="outline" type="button" className="w-full" onClick={() => setTab('signin')}>
+                      Sign in
+                    </Button>
+                    <Button variant="ghost" type="button" className="w-full text-sm text-muted-foreground" onClick={() => setSignUpWithPassword(!signUpWithPassword)}>
+                      {signUpWithPassword ? "Use magic link instead" : "Or, set a password now"}
+                    </Button>
+                  </div>
                 </TabsContent>
               </Tabs>
             )}
