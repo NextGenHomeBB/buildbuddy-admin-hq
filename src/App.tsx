@@ -12,6 +12,9 @@ import Billing from "./pages/Billing";
 import Messages from "./pages/Messages";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
+import ProjectDetail from "./pages/ProjectDetail";
+import ReportsHours from "./pages/ReportsHours";
+import SettingsOrg from "./pages/SettingsOrg";
 
 const queryClient = new QueryClient();
 
@@ -26,11 +29,14 @@ const App = () => (
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/people" element={<People />} />
           <Route path="/projects" element={<Projects />} />
+          <Route path="/projects/:id" element={<ProjectDetail />} />
           <Route path="/time" element={<Time />} />
           <Route path="/materials" element={<Materials />} />
           <Route path="/billing" element={<Billing />} />
           <Route path="/messages" element={<Messages />} />
+          <Route path="/reports/hours" element={<ReportsHours />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/settings/org" element={<SettingsOrg />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

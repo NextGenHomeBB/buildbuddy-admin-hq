@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
 import { SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
-import { Home, Users, FolderOpen, Clock, Boxes, Receipt, MessageSquare, Settings } from "lucide-react";
+import { Home, Users, FolderOpen, Clock, Boxes, Receipt, MessageSquare, Settings, BarChart3 } from "lucide-react";
 
 const items = [
   { to: "/dashboard", label: "Dashboard", icon: Home },
@@ -9,8 +9,10 @@ const items = [
   { to: "/time", label: "Time & Scheduling", icon: Clock },
   { to: "/materials", label: "Materials", icon: Boxes },
   { to: "/billing", label: "Quotes & Invoices", icon: Receipt },
+  { to: "/reports/hours", label: "Hours Report", icon: BarChart3 },
   { to: "/messages", label: "Messaging", icon: MessageSquare },
   { to: "/settings", label: "Settings", icon: Settings },
+  { to: "/settings/org", label: "Org Settings", icon: Settings },
 ];
 
 const SidebarNav = () => {
