@@ -105,6 +105,9 @@ const Login = () => {
                     </div>
                     <Button type="submit" className="w-full">Create account</Button>
                   </form>
+                  <Button variant="outline" type="button" className="w-full mt-2" onClick={() => setTab('signin')}>
+                    Sign in
+                  </Button>
                 </TabsContent>
               </Tabs>
             )}
