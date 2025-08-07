@@ -19,6 +19,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import SidebarNav from "./SidebarNav";
 import { Link } from "react-router-dom";
+import GlobalRlsBanner from "@/components/GlobalRlsBanner";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -56,6 +57,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
             </div>
           </div>
         </header>
+        <GlobalRlsBanner />
         <main className="p-6">
           <div className="relative">
             <div className="pointer-events-none absolute -top-8 left-1/2 h-24 w-72 -translate-x-1/2 rounded-full bg-gradient-to-r from-primary/30 to-accent/30 blur-2xl" />
