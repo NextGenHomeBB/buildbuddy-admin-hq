@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useMemo, useState, ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabaseClient";
@@ -40,19 +41,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           .select('org_id')
           .eq('user_id', signedInUser.id);
         if (!mems || mems.length === 0) {
-          const { data: org, error: orgErr } = await supabase
-            .from('organizations')
-            .insert({ name: orgName, created_by: signedInUser.id })
-            .select('id')
-            .single();
-          if (!orgErr && org) {
-            const { error: memErr } = await supabase
-              .from('organization_members')
-              .insert({ org_id: org.id, user_id: signedInUser.id, role: 'org_admin' });
-            if (!memErr) {
-              setActiveOrgId(org.id);
-              setNeedsOrgSetup(false);
-            }
+          console.log('[Auth] Creating org via RPC create_org_with_admin for user', signedInUser.id);
+          const { data: newOrgId, error: rpcErr } = await supabase.rpc('create_org_with_admin' as any, {
+            org_name: orgName,
+          });
+          if (!rpcErr && newOrgId) {
+            setActiveOrgId(newOrgId as string);
+            setNeedsOrgSetup(false);
+          } else if (rpcErr) {
+            console.warn('create_org_with_admin RPC error', rpcErr);
           }
         }
       }
@@ -110,19 +107,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const createOrganization = async (name: string) => {
     if (!user) throw new Error('Not signed in');
-    // 1) Create org
-    const { data: org, error: orgErr } = await supabase
-      .from('organizations')
-      .insert({ name, created_by: user.id })
-      .select('id')
-      .single();
-    if (orgErr) throw orgErr;
-    // 2) Add self as admin (policy: creator can add self)
-    const { error: memErr } = await supabase
-      .from('organization_members')
-      .insert({ org_id: org.id, user_id: user.id, role: 'org_admin' });
-    if (memErr) throw memErr;
-    setActiveOrgId(org.id);
+    console.log('[Auth] Creating org via RPC create_org_with_admin for name', name);
+    const { data: orgId, error } = await supabase.rpc('create_org_with_admin' as any, { org_name: name });
+    if (error) throw error;
+    setActiveOrgId(orgId as string);
     setNeedsOrgSetup(false);
   };
 
@@ -144,3 +132,4 @@ export const useAuth = () => {
   if (!ctx) throw new Error('useAuth must be used within AuthProvider');
   return ctx;
 };
+

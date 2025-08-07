@@ -468,6 +468,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_project_invite: {
+        Args: { invite_id: string }
+        Returns: boolean
+      }
+      create_org_with_admin: {
+        Args: { org_name: string }
+        Returns: string
+      }
       ensure_participant: {
         Args: { project: string; org: string }
         Returns: boolean
