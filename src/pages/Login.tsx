@@ -9,6 +9,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { cleanupAuthState } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -24,6 +25,8 @@ const Login = () => {
   const [resendCooldown, setResendCooldown] = useState(0);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [otp, setOtp] = useState("");
+  const [verifying, setVerifying] = useState(false);
 
   useEffect(() => {
     if (resendCooldown <= 0) return;
@@ -34,15 +37,15 @@ const Login = () => {
   }, [resendCooldown]);
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) navigate('/projects', { replace: true });
+      if (session) navigate('/onboarding', { replace: true });
     });
   }, [navigate]);
 
   const sendMagicLink = async (targetEmail: string) => {
     cleanupAuthState();
     try { await supabase.auth.signOut({ scope: 'global' }); } catch {}
-    const redirectUrl = `${window.location.origin}/projects`;
-    const { error } = await supabase.auth.signInWithOtp({
+  const redirectUrl = `${window.location.origin}/auth/callback`;
+  const { error } = await supabase.auth.signInWithOtp({
       email: targetEmail,
       options: { emailRedirectTo: redirectUrl },
     });
@@ -71,12 +74,12 @@ const Login = () => {
           const { error } = await supabase.auth.signInWithPassword({ email, password });
           if (error) throw error;
           toast({ title: "Signed in", description: "Welcome back!" });
-          navigate("/projects", { replace: true });
+          navigate("/onboarding", { replace: true });
         } else {
           await sendMagicLink(email);
           setSent(true);
-          setResendCooldown(60);
-          toast({ title: "Check your email", description: "We sent you a magic link to continue." });
+          setResendCooldown(30);
+          toast({ title: "Check your email", description: "We sent you a magic link and one-time code." });
         }
       } else {
         if (!fullName || !orgName) {
@@ -95,7 +98,7 @@ const Login = () => {
             toast({ title: "Passwords do not match", description: "Please re-enter them.", variant: "destructive" });
             return;
           }
-          const redirectUrl = `${window.location.origin}/projects`;
+          const redirectUrl = `${window.location.origin}/auth/callback`;
           const { data, error } = await supabase.auth.signUp({
             email,
             password,
@@ -104,17 +107,17 @@ const Login = () => {
           if (error) throw error;
           if (data.session) {
             toast({ title: "Account created", description: "You're all set!" });
-            navigate("/projects", { replace: true });
+            navigate("/onboarding", { replace: true });
           } else {
             setSent(true);
-            setResendCooldown(60);
-            toast({ title: "Confirm your email", description: "We sent you a confirmation link." });
+            setResendCooldown(30);
+            toast({ title: "Confirm your email", description: "We sent you a confirmation link and code." });
           }
         } else {
           await sendMagicLink(email);
           setSent(true);
-          setResendCooldown(60);
-          toast({ title: "Check your email", description: "We sent you a magic link to continue." });
+          setResendCooldown(30);
+          toast({ title: "Check your email", description: "We sent you a magic link and one-time code." });
         }
       }
     } catch (err: any) {
@@ -124,8 +127,8 @@ const Login = () => {
         try {
           await sendMagicLink(email);
           setSent(true);
-          setResendCooldown(60);
-          toast({ title: 'Use magic link', description: 'No password found or incorrect. We sent a magic link instead.' });
+          setResendCooldown(30);
+          toast({ title: 'Use magic link or code', description: 'No password found or incorrect. We emailed a link and code.' });
         } catch (e: any) {
           toast({ title: 'Sign-in failed', description: e.message || 'Please try again.', variant: 'destructive' });
         }
@@ -136,13 +139,43 @@ const Login = () => {
       setLoading(false);
     }
   };
+
+  const handleVerify = async () => {
+    if (!email || !otp || otp.length < 6) return;
+    try {
+      setVerifying(true);
+      // Try magiclink type first, then fallback to email type
+      const r1 = await supabase.auth.verifyOtp({ email, token: otp, type: 'magiclink' });
+      if (r1?.data?.session) {
+        toast({ title: 'Signed in', description: 'Verification successful.' });
+        navigate('/onboarding', { replace: true });
+        return;
+      }
+      const r2 = await supabase.auth.verifyOtp({ email, token: otp, type: 'email' });
+      if (r2?.data?.session) {
+        toast({ title: 'Signed in', description: 'Verification successful.' });
+        navigate('/onboarding', { replace: true });
+        return;
+      }
+      toast({ title: 'Invalid or expired code', description: 'Please request a new code.', variant: 'destructive' });
+    } catch (e: any) {
+      const m = String(e?.message || '').toLowerCase();
+      if (m.includes('expired') || m.includes('invalid')) {
+        toast({ title: 'Invalid or expired code', description: 'Please request a new code.', variant: 'destructive' });
+      } else {
+        toast({ title: 'Verification failed', description: e.message || 'Try again.', variant: 'destructive' });
+      }
+    } finally {
+      setVerifying(false);
+    }
+  };
   return (
     <AppLayout>
-      <Seo title="BuildBuddy — Login & Sign up" description="Sign in or sign up to BuildBuddy with a magic link." canonical="/login" />
+      <Seo title="BuildBuddy — Login" description="Sign in passwordlessly via magic link or a one-time code." canonical="/auth/login" />
       <main className="mx-auto max-w-md space-y-8">
         <header className="text-center space-y-2">
-          <h1 className="text-2xl font-semibold tracking-tight">BuildBuddy Login & Sign Up</h1>
-          <p className="text-sm text-muted-foreground">Passwordless access with secure magic links.</p>
+          <h1 className="text-2xl font-semibold tracking-tight">Sign in to BuildBuddy</h1>
+          <p className="text-sm text-muted-foreground">Magic link, one-time code, or password.</p>
         </header>
 
         <Card>
@@ -152,12 +185,27 @@ const Login = () => {
           <CardContent>
             {sent ? (
               <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">We sent a magic link to {email}. Open it on this device to continue.</p>
+                <p className="text-sm text-muted-foreground">We sent a magic link and code to {email}. Open the link or enter the 6-digit code below.</p>
+                <div className="flex justify-center">
+                  <InputOTP maxLength={6} value={otp} onChange={setOtp}>
+                    <InputOTPGroup>
+                      <InputOTPSlot index={0} />
+                      <InputOTPSlot index={1} />
+                      <InputOTPSlot index={2} />
+                      <InputOTPSlot index={3} />
+                      <InputOTPSlot index={4} />
+                      <InputOTPSlot index={5} />
+                    </InputOTPGroup>
+                  </InputOTP>
+                </div>
                 <div className="flex gap-2">
-                  <Button className="flex-1" type="button" onClick={handleResend} disabled={resendCooldown > 0 || loading}>
-                    {resendCooldown > 0 ? `Resend (${resendCooldown}s)` : "Resend magic link"}
+                  <Button className="flex-1" type="button" onClick={handleVerify} disabled={verifying || otp.length < 6}>
+                    {verifying ? 'Verifying…' : 'Verify code'}
                   </Button>
-                  <Button variant="outline" type="button" className="flex-1" onClick={() => setSent(false)}>
+                  <Button variant="outline" type="button" className="flex-1" onClick={handleResend} disabled={resendCooldown > 0 || loading}>
+                    {resendCooldown > 0 ? `Resend (${resendCooldown}s)` : "Resend"}
+                  </Button>
+                  <Button variant="ghost" type="button" onClick={() => setSent(false)}>
                     Back
                   </Button>
                 </div>

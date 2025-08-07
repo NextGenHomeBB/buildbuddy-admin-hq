@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider, QueryCache, MutationCache } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import People from "./pages/People";
 import Projects from "./pages/Projects";
@@ -16,6 +16,10 @@ import ProjectDetail from "./pages/ProjectDetail";
 import ReportsHours from "./pages/ReportsHours";
 import SettingsOrg from "./pages/SettingsOrg";
 import Login from "./pages/Login";
+import AuthCallback from "./pages/AuthCallback";
+import AuthLogout from "./pages/AuthLogout";
+import Onboarding from "./pages/Onboarding";
+import OrgSwitch from "./pages/OrgSwitch";
 import { AuthProvider } from "@/context/AuthContext";
 import AuthGate from "@/components/auth/AuthGate";
 import { BannerProvider } from "@/context/BannerContext";
@@ -51,10 +55,19 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
-              <Route path="/login" element={<Login />} />
+              <Route path="/auth/login" element={<Login />} />
+              <Route path="/login" element={<Navigate to="/auth/login" replace />} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
+              <Route path="/auth/logout" element={<AuthLogout />} />
+
               <Route path="/" element={<Dashboard />} />
               <Route path="/dashboard" element={<Dashboard />} />
+
               <Route path="/people" element={<People />} />
+
+              <Route path="/onboarding" element={<AuthGate><Onboarding /></AuthGate>} />
+              <Route path="/org/switch" element={<AuthGate><OrgSwitch /></AuthGate>} />
+
               <Route path="/projects" element={<AuthGate><Projects /></AuthGate>} />
               <Route path="/projects/:id" element={<AuthGate><ProjectDetail /></AuthGate>} />
               <Route path="/time" element={<AuthGate><Time /></AuthGate>} />
