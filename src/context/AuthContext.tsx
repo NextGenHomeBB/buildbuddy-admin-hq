@@ -21,6 +21,49 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [activeOrgId, setActiveOrgId] = useState<string | null>(null);
   const [needsOrgSetup, setNeedsOrgSetup] = useState(false);
 
+  // Handle post sign-in bootstrap for profile and organization
+  const handlePostSignIn = async (signedInUser: User) => {
+    try {
+      const fullName = localStorage.getItem('signup_full_name');
+      const orgName = localStorage.getItem('signup_org_name');
+
+      if (fullName) {
+        await supabase.from('profiles').upsert(
+          { user_id: signedInUser.id, full_name: fullName },
+          { onConflict: 'user_id' }
+        );
+      }
+
+      if (orgName) {
+        const { data: mems } = await supabase
+          .from('organization_members')
+          .select('org_id')
+          .eq('user_id', signedInUser.id);
+        if (!mems || mems.length === 0) {
+          const { data: org, error: orgErr } = await supabase
+            .from('organizations')
+            .insert({ name: orgName, created_by: signedInUser.id })
+            .select('id')
+            .single();
+          if (!orgErr && org) {
+            const { error: memErr } = await supabase
+              .from('organization_members')
+              .insert({ org_id: org.id, user_id: signedInUser.id, role: 'org_admin' });
+            if (!memErr) {
+              setActiveOrgId(org.id);
+              setNeedsOrgSetup(false);
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('post sign-in bootstrap error', e);
+    } finally {
+      localStorage.removeItem('signup_full_name');
+      localStorage.removeItem('signup_org_name');
+    }
+  };
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, sess) => {
       setSession(sess);
@@ -28,7 +71,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Defer further calls to avoid deadlocks
       if (event === 'SIGNED_IN') {
         setTimeout(() => {
-          refreshOrgScope().catch(() => {});
+          if (sess?.user) {
+            handlePostSignIn(sess.user)
+              .catch(() => {})
+              .finally(() => { refreshOrgScope().catch(() => {}); });
+          } else {
+            refreshOrgScope().catch(() => {});
+          }
         }, 0);
       }
     });
