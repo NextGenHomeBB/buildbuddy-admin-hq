@@ -118,7 +118,20 @@ const Login = () => {
         }
       }
     } catch (err: any) {
-      toast({ title: "Request failed", description: err.message, variant: "destructive" });
+      const msg = String(err?.message || '').toLowerCase();
+      const code = (err && (err.code || err.error || err.name)) || '';
+      if (tab === 'signin' && signInMethod === 'password' && (code === 'invalid_credentials' || msg.includes('invalid login credentials'))) {
+        try {
+          await sendMagicLink(email);
+          setSent(true);
+          setResendCooldown(60);
+          toast({ title: 'Use magic link', description: 'No password found or incorrect. We sent a magic link instead.' });
+        } catch (e: any) {
+          toast({ title: 'Sign-in failed', description: e.message || 'Please try again.', variant: 'destructive' });
+        }
+      } else {
+        toast({ title: 'Request failed', description: err.message, variant: 'destructive' });
+      }
     } finally {
       setLoading(false);
     }
