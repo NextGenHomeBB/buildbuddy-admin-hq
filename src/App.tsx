@@ -15,11 +15,12 @@ import NotFound from "./pages/NotFound";
 import ProjectDetail from "./pages/ProjectDetail";
 import ReportsHours from "./pages/ReportsHours";
 import SettingsOrg from "./pages/SettingsOrg";
-import Login from "./pages/Login";
+import Auth from "./pages/Auth";
 import AuthCallback from "./pages/AuthCallback";
 import AuthLogout from "./pages/AuthLogout";
 import Onboarding from "./pages/Onboarding";
 import OrgSwitch from "./pages/OrgSwitch";
+import UpdatePassword from "./pages/UpdatePassword";
 import { AuthProvider } from "@/context/AuthContext";
 import AuthGate from "@/components/auth/AuthGate";
 import { BannerProvider } from "@/context/BannerContext";
@@ -55,10 +56,12 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
-              <Route path="/auth/login" element={<Login />} />
-              <Route path="/login" element={<Navigate to="/auth/login" replace />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/auth/login" element={<Navigate to="/auth" replace />} />
+              <Route path="/login" element={<Navigate to="/auth" replace />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/auth/logout" element={<AuthLogout />} />
+              <Route path="/auth/update-password" element={<UpdatePassword />} />
 
               <Route path="/" element={<Dashboard />} />
               <Route path="/dashboard" element={<Dashboard />} />
