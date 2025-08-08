@@ -1,10 +1,15 @@
+import { useState } from "react";
 import AppLayout from "@/components/layout/AppLayout";
 import Seo from "@/components/seo/Seo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileDown, CalendarPlus } from "lucide-react";
+import NewShiftModal from "@/components/time/NewShiftModal";
+import { useActiveOrg } from "@/hooks/useActiveOrg";
 
 const Time = () => {
+  const [isNewShiftOpen, setIsNewShiftOpen] = useState(false);
+  const { activeOrgId } = useActiveOrg();
   return (
     <AppLayout>
       <Seo title="BuildBuddy — Time & Scheduling" description="Create shifts, approve time logs, and export hours." />
@@ -16,7 +21,7 @@ const Time = () => {
           </div>
           <div className="flex gap-2">
             <Button variant="outline"><FileDown /> Export CSV</Button>
-            <Button variant="hero"><CalendarPlus /> New Shift</Button>
+            <Button variant="hero" onClick={() => setIsNewShiftOpen(true)} disabled={!activeOrgId}><CalendarPlus /> New Shift</Button>
           </div>
         </div>
 
@@ -39,6 +44,11 @@ const Time = () => {
           </Card>
         </div>
       </section>
+      <NewShiftModal
+        isOpen={isNewShiftOpen}
+        onClose={() => setIsNewShiftOpen(false)}
+        orgId={activeOrgId || ""}
+      />
     </AppLayout>
   );
 };
