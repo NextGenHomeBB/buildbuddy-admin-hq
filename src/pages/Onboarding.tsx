@@ -30,6 +30,9 @@ const Onboarding = () => {
           return;
         }
         const uid = sess.session.user.id;
+        const meta: any = sess.session.user.user_metadata || {};
+        const autoOrgName = (meta.org_name || meta.organization || meta.company || localStorage.getItem('signup_org_name')) as string | null;
+        if (autoOrgName) setOrgName(String(autoOrgName));
         // 1) memberships
         const { data: mems } = await supabase.from('organization_members').select('org_id').eq('user_id', uid);
         if (mems && mems.length > 0) {
@@ -60,7 +63,19 @@ const Onboarding = () => {
             return;
           }
         }
-        // 4) else show create company
+        // 4) if no invites and we have an org name from metadata, auto-create the company
+        if (autoOrgName && autoOrgName.trim().length > 1) {
+          try {
+            await createOrganization(autoOrgName.trim());
+            toast({ title: 'Company created', description: 'Welcome to BuildBuddy!' });
+            navigate('/projects', { replace: true });
+            return;
+          } catch (err) {
+            // fall back to manual creation UI
+            console.warn('Auto-create org failed', err);
+          }
+        }
+        // 5) else show create company
         setLoading(false);
       } catch (e: any) {
         setLoading(false);
@@ -68,7 +83,7 @@ const Onboarding = () => {
       }
     };
     run();
-  }, [navigate, toast, userEmail]);
+  }, [navigate, toast, userEmail, createOrganization]);
 
   const acceptInvite = async (id: string) => {
     try {

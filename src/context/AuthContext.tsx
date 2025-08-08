@@ -30,12 +30,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Handle post sign-in bootstrap for profile and organization
   const handlePostSignIn = async (signedInUser: User) => {
     try {
-      const fullName = localStorage.getItem('signup_full_name');
-      const orgName = localStorage.getItem('signup_org_name');
+      const meta: any = signedInUser.user_metadata || {};
+      const fullNameLS = localStorage.getItem('signup_full_name');
+      const orgNameLS = localStorage.getItem('signup_org_name');
+
+      const fullName = fullNameLS || meta.full_name || meta.name || meta.fullName || null;
+      const orgName = orgNameLS || meta.org_name || meta.organization || meta.company || null;
 
       if (fullName) {
         await supabase.from('profiles').upsert(
-          { user_id: signedInUser.id, full_name: fullName },
+          { user_id: signedInUser.id, full_name: fullName as string },
           { onConflict: 'user_id' }
         );
       }
@@ -48,7 +52,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (!mems || mems.length === 0) {
           console.log('[Auth] Creating org via RPC create_org_with_admin for user', signedInUser.id);
           const { data: newOrgId, error: rpcErr } = await supabase.rpc('create_org_with_admin' as any, {
-            org_name: orgName,
+            org_name: String(orgName),
           });
           if (!rpcErr && newOrgId) {
             setActiveOrgId(newOrgId as string);
