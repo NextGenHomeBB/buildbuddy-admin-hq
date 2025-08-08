@@ -20,7 +20,8 @@ import { cn } from "@/lib/utils";
 import SidebarNav from "./SidebarNav";
 import { Link } from "react-router-dom";
 import GlobalRlsBanner from "@/components/GlobalRlsBanner";
-
+import OrgSwitcher from "@/components/org/OrgSwitcher";
+import OrgSetupModal from "@/components/org/OrgSetupModal";
 interface AppLayoutProps {
   children: ReactNode;
 }
@@ -53,7 +54,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
             <div className="flex-1" />
             {/* Placeholder for org selector and user menu */}
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Organization</span>
+              <OrgSwitcher />
               <Link to="/auth/logout" className={cn(buttonVariants({ variant: "outline" }), "h-8")}>Sign out</Link>
             </div>
           </div>

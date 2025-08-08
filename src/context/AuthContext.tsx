@@ -19,8 +19,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeOrgId, setActiveOrgId] = useState<string | null>(null);
+  const [activeOrgId, setActiveOrgIdState] = useState<string | null>(null);
   const [needsOrgSetup, setNeedsOrgSetup] = useState(false);
+  const setActiveOrgId = (orgId: string | null) => {
+    setActiveOrgIdState(orgId);
+    if (orgId) localStorage.setItem("active_org_id", orgId);
+    else localStorage.removeItem("active_org_id");
+  };
 
   // Handle post sign-in bootstrap for profile and organization
   const handlePostSignIn = async (signedInUser: User) => {
@@ -65,6 +70,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, sess) => {
       setSession(sess);
       setUser(sess?.user ?? null);
+      if (event === 'SIGNED_OUT') {
+        setActiveOrgId(null);
+        setNeedsOrgSetup(false);
+      }
       // Defer further calls to avoid deadlocks
       if (event === 'SIGNED_IN') {
         setTimeout(() => {
@@ -97,7 +106,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
     if (data && data.length > 0) {
-      setActiveOrgId(data[0].org_id);
+      const existing = data.map(d => d.org_id);
+      const saved = localStorage.getItem('active_org_id');
+      if (saved && existing.includes(saved)) {
+        setActiveOrgId(saved);
+      } else {
+        setActiveOrgId(existing[0]);
+      }
       setNeedsOrgSetup(false);
     } else {
       setActiveOrgId(null);
