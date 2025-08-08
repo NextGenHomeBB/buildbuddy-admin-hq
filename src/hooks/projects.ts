@@ -60,6 +60,9 @@ export const useProjectAssignments = (projectId?: string) =>
 export type TimeFilters = {
   status?: ("submitted" | "approved" | "rejected")[];
   company?: "all" | "internal" | "vendors";
+  dateFrom?: string; // ISO string or YYYY-MM-DD
+  dateTo?: string;   // ISO string or YYYY-MM-DD
+  userId?: string;   // exact match
 };
 
 export const useTimeLogs = (projectId?: string, filters?: TimeFilters) =>
@@ -74,6 +77,17 @@ export const useTimeLogs = (projectId?: string, filters?: TimeFilters) =>
 
       if (filters?.status && filters.status.length > 0) {
         query = query.in("status", filters.status);
+      }
+      if (filters?.dateFrom) {
+        const fromIso = filters.dateFrom.length === 10 ? new Date(filters.dateFrom + "T00:00:00Z").toISOString() : filters.dateFrom;
+        query = query.gte("started_at", fromIso);
+      }
+      if (filters?.dateTo) {
+        const toIso = filters.dateTo.length === 10 ? new Date(filters.dateTo + "T23:59:59Z").toISOString() : filters.dateTo;
+        query = query.lte("started_at", toIso);
+      }
+      if (filters?.userId) {
+        query = query.eq("user_id", filters.userId);
       }
 
       const { data, error } = await query.order("started_at", { ascending: false });

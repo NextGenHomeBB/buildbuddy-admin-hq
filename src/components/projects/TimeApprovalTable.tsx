@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -6,28 +6,67 @@ import { useProjectOwnerOrg, useTimeLogs, TimeFilters } from "@/hooks/projects";
 import CompanyChip from "./CompanyChip";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import CsvExportButton from "./CsvExportButton";
+import FiltersBar from "./FiltersBar";
+import { useSearchParams } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface Props { projectId: string }
 
 const TimeApprovalTable = ({ projectId }: Props) => {
   const [status, setStatus] = useState<TimeFilters["status"]>(["submitted","approved"]);
   const [company, setCompany] = useState<TimeFilters["company"]>("all");
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
+  const [workerId, setWorkerId] = useState<string>("");
+  const [searchParams, setSearchParams] = useSearchParams();
   const { data: ownerOrgId } = useProjectOwnerOrg(projectId);
-  const { data: logs, isLoading, refetch } = useTimeLogs(projectId, { status, company });
+  const { activeOrgId } = useAuth();
+  const qc = useQueryClient();
+  const { data: logs, isLoading } = useTimeLogs(projectId, { status, dateFrom: dateFrom || undefined, dateTo: dateTo || undefined, userId: workerId || undefined });
   const { toast } = useToast();
 
-  const filtered = useMemo(() => {
-    if (!logs) return [] as typeof logs;
-    if (company === "all" || !ownerOrgId) return logs;
-    return logs.filter(l => company === "internal" ? l.employer_org_id === ownerOrgId : l.employer_org_id !== ownerOrgId);
-  }, [logs, company, ownerOrgId]);
+// URL sync (initialize)
+useEffect(() => {
+  const s = searchParams.get("status");
+  if (s) setStatus(s.split(",") as any);
+  const df = searchParams.get("from");
+  const dt = searchParams.get("to");
+  const w = searchParams.get("worker");
+  const c = searchParams.get("company");
+  if (df) setDateFrom(df); if (dt) setDateTo(dt);
+  if (w) setWorkerId(w);
+  if (c === "internal" || c === "vendors" || c === "all") setCompany(c);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, []);
+
+// URL sync (debounced)
+useEffect(() => {
+  const id = setTimeout(() => {
+    const next = new URLSearchParams(searchParams);
+    status?.length ? next.set("status", status.join(",")) : next.delete("status");
+    dateFrom ? next.set("from", dateFrom) : next.delete("from");
+    dateTo ? next.set("to", dateTo) : next.delete("to");
+    workerId ? next.set("worker", workerId) : next.delete("worker");
+    next.set("company", company || "all");
+    setSearchParams(next, { replace: true });
+  }, 300);
+  return () => clearTimeout(id);
+}, [status, company, dateFrom, dateTo, workerId, setSearchParams, searchParams]);
+
+const filtered = useMemo(() => {
+  if (!logs) return [] as typeof logs;
+  if (company === "all" || !ownerOrgId) return logs;
+  return logs.filter(l => company === "internal" ? l.employer_org_id === ownerOrgId : l.employer_org_id !== ownerOrgId);
+}, [logs, company, ownerOrgId]);
 
   const approve = async (id: string, billTo: string | null) => {
     try {
       const { error } = await supabase.from("time_logs").update({ status: "approved" }).eq("id", id);
       if (error) throw error;
       toast({ title: "Approved" });
-      refetch();
+      qc.invalidateQueries({ queryKey: ["time-logs"] });
     } catch (e: any) {
       toast({ title: "Failed", description: e.message, variant: "destructive" });
     }
@@ -37,7 +76,7 @@ const TimeApprovalTable = ({ projectId }: Props) => {
       const { error } = await supabase.from("time_logs").update({ status: "rejected" }).eq("id", id);
       if (error) throw error;
       toast({ title: "Rejected" });
-      refetch();
+      qc.invalidateQueries({ queryKey: ["time-logs"] });
     } catch (e: any) {
       toast({ title: "Failed", description: e.message, variant: "destructive" });
     }
@@ -57,17 +96,24 @@ const TimeApprovalTable = ({ projectId }: Props) => {
         <CardHeader>
           <CardTitle>Filters</CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-wrap gap-2">
-          <div className="flex items-center gap-2">
-            <Button size="sm" variant={status?.includes("submitted")?"default":"outline"} onClick={()=>setStatus(["submitted"])}>Submitted</Button>
-            <Button size="sm" variant={status?.includes("approved")?"default":"outline"} onClick={()=>setStatus(["approved"])}>Approved</Button>
-            <Button size="sm" variant={status?.includes("rejected")?"default":"outline"} onClick={()=>setStatus(["rejected"])}>Rejected</Button>
-          </div>
-          <div className="flex items-center gap-2 ml-4">
-            <Button size="sm" variant={company==="all"?"default":"outline"} onClick={()=>setCompany("all")}>All</Button>
-            <Button size="sm" variant={company==="internal"?"default":"outline"} onClick={()=>setCompany("internal")}>Internal</Button>
-            <Button size="sm" variant={company==="vendors"?"default":"outline"} onClick={()=>setCompany("vendors")}>Vendors</Button>
-          </div>
+        <CardContent className="flex items-center justify-between gap-4 flex-wrap">
+          <FiltersBar
+            status={status as any}
+            setStatus={(s)=>setStatus(s as any)}
+            company={company}
+            setCompany={setCompany}
+            dateFrom={dateFrom}
+            dateTo={dateTo}
+            setDateFrom={setDateFrom}
+            setDateTo={setDateTo}
+            workerId={workerId}
+            setWorkerId={setWorkerId}
+          />
+          <CsvExportButton
+            filename="time-logs.csv"
+            headers={["worker","employer_org","started","ended","minutes","status","note"]}
+            rows={(filtered||[]).map(l => [l.user_id||"", l.employer_org_id||"", l.started_at||"", l.ended_at||"", l.minutes||0, l.status||"", l.note||""])}
+          />
         </CardContent>
       </Card>
 
