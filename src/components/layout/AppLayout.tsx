@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useMemo, useState } from "react";
 import {
   SidebarProvider,
   Sidebar,
@@ -21,12 +21,18 @@ import SidebarNav from "./SidebarNav";
 import { Link } from "react-router-dom";
 import GlobalRlsBanner from "@/components/GlobalRlsBanner";
 import OrgSwitcher from "@/components/org/OrgSwitcher";
-import OrgSetupModal from "@/components/org/OrgSetupModal";
+import CreateOrgModal from "@/components/org/CreateOrgModal";
+import { useActiveOrg } from "@/hooks/useActiveOrg";
+
 interface AppLayoutProps {
   children: ReactNode;
 }
 
 const AppLayout = ({ children }: AppLayoutProps) => {
+  const { hasAnyOrg, loading: orgLoading, activeOrgId } = useActiveOrg();
+  const [createOpen, setCreateOpen] = useState(false);
+  const forcedOpen = useMemo(() => !orgLoading && !hasAnyOrg && !activeOrgId, [orgLoading, hasAnyOrg, activeOrgId]);
+
   return (
     <SidebarProvider>
       <Sidebar collapsible="icon">
@@ -52,9 +58,9 @@ const AppLayout = ({ children }: AppLayoutProps) => {
           <div className="h-14 px-4 flex items-center gap-3">
             <SidebarTrigger />
             <div className="flex-1" />
-            {/* Placeholder for org selector and user menu */}
+            {/* Org switcher and user menu */}
             <div className="flex items-center gap-2">
-              <OrgSwitcher />
+              <OrgSwitcher onCreateNew={() => setCreateOpen(true)} />
               <Link to="/auth/logout" className={cn(buttonVariants({ variant: "outline" }), "h-8")}>Sign out</Link>
             </div>
           </div>
@@ -64,9 +70,10 @@ const AppLayout = ({ children }: AppLayoutProps) => {
           <div className="relative">
             <div className="pointer-events-none absolute -top-8 left-1/2 h-24 w-72 -translate-x-1/2 rounded-full bg-gradient-to-r from-primary/30 to-accent/30 blur-2xl" />
           </div>
-          {children}
+          {/* Block content when first-run org creation is required */}
+          {forcedOpen ? null : children}
         </main>
-        <OrgSetupModal />
+        <CreateOrgModal open={forcedOpen || createOpen} forced={forcedOpen} onClose={() => setCreateOpen(false)} />
       </SidebarInset>
     </SidebarProvider>
   );

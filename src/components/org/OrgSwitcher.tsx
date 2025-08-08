@@ -1,75 +1,53 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { useActiveOrg } from "@/hooks/useActiveOrg";
 
-const OrgSwitcher = () => {
-  const { activeOrgId, setActiveOrgId, needsOrgSetup } = useAuth();
-  const [orgs, setOrgs] = useState<{ id: string; name: string }[]>([]);
+interface OrgSwitcherProps {
+  onCreateNew?: () => void;
+}
+
+const OrgSwitcher = ({ onCreateNew }: OrgSwitcherProps) => {
   const navigate = useNavigate();
-
-  useEffect(() => {
-    let cancelled = false;
-    const load = async () => {
-      const { data, error } = await supabase
-        .from("organizations")
-        .select("id, name")
-        .order("name");
-      if (!cancelled && !error) setOrgs(data || []);
-    };
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  // Auto-select a single organization so admins don't need to choose
-  useEffect(() => {
-    if (orgs.length === 1 && activeOrgId !== orgs[0].id) {
-      setActiveOrgId(orgs[0].id);
-    }
-  }, [orgs, activeOrgId, setActiveOrgId]);
+  const { activeOrgId, setActiveOrgId, memberships } = useActiveOrg();
 
   const value = useMemo(() => activeOrgId ?? undefined, [activeOrgId]);
 
+  if (memberships.length === 0) {
+    return (
+      <Button size="sm" onClick={() => onCreateNew ? onCreateNew() : navigate("/onboarding")}>Create organization</Button>
+    );
+  }
+
+  if (memberships.length === 1) {
+    const m = memberships[0];
+    return <div className="text-sm">{m.org_name} <span className="text-muted-foreground">• {m.role}</span></div>;
+  }
+
   return (
-    <>
-      {orgs.length === 0 ? (
-        needsOrgSetup ? (
-          <Button size="sm" onClick={() => navigate("/onboarding")}>
-            Create organization
-          </Button>
-        ) : (
-          <div className="text-sm text-muted-foreground">No organizations</div>
-        )
-      ) : orgs.length === 1 ? (
-        <div className="text-sm">{orgs[0].name}</div>
-      ) : (
-        <Select
-          value={value}
-          onValueChange={(v) => {
-            if (v === "__create__") {
-              navigate("/onboarding");
-              return;
-            }
-            setActiveOrgId(v);
-          }}
-        >
-          <SelectTrigger className="h-8 w-[220px]">
-            <SelectValue placeholder="Select organization" />
-          </SelectTrigger>
-          <SelectContent>
-            {orgs.map((o) => (
-              <SelectItem key={o.id} value={o.id}>
-                {o.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      )}
-    </>
+    <Select
+      value={value}
+      onValueChange={(v) => {
+        if (v === "__create__") {
+          onCreateNew ? onCreateNew() : navigate("/onboarding");
+          return;
+        }
+        setActiveOrgId(v);
+      }}
+    >
+      <SelectTrigger className="h-8 w-[260px]">
+        <SelectValue placeholder="Select organization" />
+      </SelectTrigger>
+      <SelectContent>
+        {memberships.map((m) => (
+          <SelectItem key={m.org_id} value={m.org_id}>
+            {m.org_name} — {m.role}
+          </SelectItem>
+        ))}
+        <SelectItem value="__create__">➕ Create organization</SelectItem>
+      </SelectContent>
+    </Select>
   );
 };
 
