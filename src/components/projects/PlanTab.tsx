@@ -21,7 +21,11 @@ const PlanTab = ({ projectId }: Props) => {
         () => qc.invalidateQueries({ queryKey: ["project-phases", projectId] })
       )
       .subscribe();
-    return () => supabase.removeChannel(channel);
+
+    // Ensure cleanup is synchronous (do not return a Promise)
+    return () => {
+      void supabase.removeChannel(channel);
+    };
   }, [projectId, qc]);
 
   return (
@@ -37,3 +41,4 @@ const PlanTab = ({ projectId }: Props) => {
 };
 
 export default PlanTab;
+

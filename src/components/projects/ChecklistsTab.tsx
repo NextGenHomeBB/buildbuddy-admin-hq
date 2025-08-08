@@ -62,7 +62,11 @@ const ChecklistItems = ({ checklistId }: { checklistId: string }) => {
         () => qc.invalidateQueries({ queryKey: ["checklist-items", checklistId] })
       )
       .subscribe();
-    return () => supabase.removeChannel(channel);
+
+    // Ensure cleanup is synchronous (do not return a Promise)
+    return () => {
+      void supabase.removeChannel(channel);
+    };
   }, [checklistId, qc]);
 
   return (
@@ -126,7 +130,11 @@ const ChecklistsTab = ({ projectId }: Props) => {
         () => qc.invalidateQueries({ queryKey: ["checklists", projectId, taskId] })
       )
       .subscribe();
-    return () => supabase.removeChannel(channel);
+
+    // Ensure cleanup is synchronous (do not return a Promise)
+    return () => {
+      void supabase.removeChannel(channel);
+    };
   }, [projectId, taskId, qc]);
 
   const addChecklist = async (title: string) => {
@@ -254,7 +262,7 @@ const ChecklistsTab = ({ projectId }: Props) => {
                 </TableRow>
               ))}
               {checklists && checklists.length === 0 && !isLoading && (
-                <TableRow><TableCell colSpan={2} className="text-muted-foreground">No checklists yet.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={2} className="text-muted-foreground">No checklists yet.</TableCell></Row>
               )}
             </TableBody>
           </Table>
@@ -272,3 +280,4 @@ const ChecklistsTab = ({ projectId }: Props) => {
 };
 
 export default ChecklistsTab;
+

@@ -31,7 +31,11 @@ const BudgetTab = ({ projectId }: Props) => {
         }
       )
       .subscribe();
-    return () => supabase.removeChannel(channel);
+
+    // Ensure cleanup is synchronous (do not return a Promise)
+    return () => {
+      void supabase.removeChannel(channel);
+    };
   }, [projectId, qc]);
 
   const addRow = async () => {
@@ -142,3 +146,4 @@ const BudgetTab = ({ projectId }: Props) => {
 };
 
 export default BudgetTab;
+

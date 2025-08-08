@@ -40,7 +40,11 @@ const TasksPanel = ({ projectId, phaseId }: TasksPanelProps) => {
         () => qc.invalidateQueries({ queryKey: ["tasks", projectId, phaseId ?? "__all__"] })
       )
       .subscribe();
-    return () => supabase.removeChannel(channel);
+
+    // Ensure cleanup is synchronous (do not return a Promise)
+    return () => {
+      void supabase.removeChannel(channel);
+    };
   }, [projectId, phaseId, qc]);
 
   const addTask = async () => {
@@ -123,7 +127,7 @@ const TasksPanel = ({ projectId, phaseId }: TasksPanelProps) => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {statusOptions.map((s) => <SelectItem key={s} value={s}>{s.replace("_"," ")}</SelectItem>)}
+                      {["todo", "in_progress", "done"].map((s) => <SelectItem key={s} value={s}>{s.replace("_"," ")}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </TableCell>
@@ -162,3 +166,4 @@ const TasksPanel = ({ projectId, phaseId }: TasksPanelProps) => {
 };
 
 export default TasksPanel;
+
