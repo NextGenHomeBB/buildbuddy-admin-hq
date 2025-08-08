@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { useProjectAssignments, useProjectOwnerOrg } from "@/hooks/projects";
@@ -25,6 +26,19 @@ const AssignmentsTable = ({ projectId }: Props) => {
     }
   };
 
+  useEffect(() => {
+    const channel = supabase
+      .channel(`assignments-${projectId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "project_assignments", filter: `project_id=eq.${projectId}` },
+        () => qc.invalidateQueries({ queryKey: ["project-assignments", projectId] })
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [projectId, qc]);
   return (
     <Table>
       <TableHeader>

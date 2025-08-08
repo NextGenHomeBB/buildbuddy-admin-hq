@@ -105,7 +105,6 @@ export const useProjectInvites = (projectId?: string) =>
         .from("project_invites")
         .select("id, project_id, employer_org_id, email, token, expires_at, accepted_at, created_at")
         .eq("project_id", projectId)
-        .is("accepted_at", null)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;

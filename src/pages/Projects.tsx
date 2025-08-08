@@ -8,6 +8,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import CreateOrgModal from "@/components/org/CreateOrgModal";
 import CreateProjectModal from "@/components/projects/CreateProjectModal";
+import ProjectsList from "@/components/projects/ProjectsList";
 
 
 const Projects = () => {
@@ -34,7 +35,7 @@ const Projects = () => {
             <CardTitle>All Projects</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-sm text-muted-foreground">Connect Supabase to populate this table. Filters and export will appear here.</div>
+            <ProjectsList />
           </CardContent>
         </Card>
         <CreateProjectModal

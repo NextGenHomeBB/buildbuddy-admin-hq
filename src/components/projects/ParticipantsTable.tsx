@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -24,6 +25,20 @@ const ParticipantsTable = ({ projectId }: Props) => {
       toast({ title: "Failed", description: e.message, variant: "destructive" });
     }
   };
+
+  useEffect(() => {
+    const channel = supabase
+      .channel(`participants-${projectId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "project_participants", filter: `project_id=eq.${projectId}` },
+        () => qc.invalidateQueries({ queryKey: ["project-participants", projectId] })
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [projectId, qc]);
 
   return (
     <div className="grid gap-4">

@@ -82,6 +82,20 @@ const filtered = useMemo(() => {
     }
   };
 
+  useEffect(() => {
+    const channel = supabase
+      .channel(`time-logs-${projectId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "time_logs", filter: `project_id=eq.${projectId}` },
+        () => qc.invalidateQueries({ queryKey: ["time-logs", projectId] })
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [projectId, qc]);
+
   const totalsByCompany = useMemo(() => {
     const map = new Map<string, number>();
     filtered?.forEach(l => {
@@ -143,8 +157,8 @@ const filtered = useMemo(() => {
                   <TableCell>{l.minutes ?? 0}</TableCell>
                   <TableCell>{l.status}</TableCell>
                   <TableCell className="text-right space-x-2">
-                    <Button size="sm" variant="outline" onClick={() => approve(l.id, l.bill_to_org_id!)} disabled={!ownerOrgId || l.bill_to_org_id !== ownerOrgId}>Approve</Button>
-                    <Button size="sm" variant="outline" onClick={() => reject(l.id)} disabled={!ownerOrgId || l.bill_to_org_id !== ownerOrgId}>Reject</Button>
+                    <Button size="sm" variant="outline" onClick={() => approve(l.id, l.bill_to_org_id!)} disabled={!activeOrgId || l.bill_to_org_id !== activeOrgId}>Approve</Button>
+                    <Button size="sm" variant="outline" onClick={() => reject(l.id)} disabled={!activeOrgId || l.bill_to_org_id !== activeOrgId}>Reject</Button>
                   </TableCell>
                 </TableRow>
               ))}
