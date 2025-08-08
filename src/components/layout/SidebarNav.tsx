@@ -4,7 +4,7 @@ import { Home, Users, FolderOpen, Clock, Boxes, Receipt, MessageSquare, Settings
 
 const items = [
   { to: "/dashboard", label: "Dashboard", icon: Home },
-  { to: "/people", label: "People & Roles", icon: Users },
+  { to: "/people", label: "Users", icon: Users },
   { to: "/projects", label: "Projects", icon: FolderOpen },
   { to: "/time", label: "Time & Scheduling", icon: Clock },
   { to: "/materials", label: "Materials", icon: Boxes },
