@@ -42,13 +42,14 @@ const SettingsOrg = () => {
 
     setLoadingOrg(true);
     console.log("[SettingsOrg] Loading organization", activeOrgId);
-    // Cast payloads to any where needed to avoid type mismatch if generated types lag behind
-    supabase
-      .from("organizations")
-      .select("name, whatsapp_phone")
-      .eq("id", activeOrgId)
-      .single()
-      .then(({ data, error }) => {
+    (async () => {
+      try {
+        const { data, error } = await (supabase as any)
+          .from("organizations")
+          .select("name, whatsapp_phone")
+          .eq("id", activeOrgId)
+          .maybeSingle();
+
         if (error) {
           console.warn("[SettingsOrg] load error", error);
           toast({
@@ -64,8 +65,10 @@ const SettingsOrg = () => {
         setInitialPhone(wapp || "");
         setName(orgName);
         setPhone(wapp || "");
-      })
-      .finally(() => setLoadingOrg(false));
+      } finally {
+        setLoadingOrg(false);
+      }
+    })();
   }, [activeOrgId]);
 
   const onSave = async () => {

@@ -129,18 +129,21 @@ export type Database = {
           created_by: string
           id: string
           name: string
+          whatsapp_phone: string | null
         }
         Insert: {
           created_at?: string
           created_by: string
           id?: string
           name: string
+          whatsapp_phone?: string | null
         }
         Update: {
           created_at?: string
           created_by?: string
           id?: string
           name?: string
+          whatsapp_phone?: string | null
         }
         Relationships: []
       }
