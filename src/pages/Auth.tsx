@@ -22,7 +22,7 @@ const Auth = () => {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) navigate("/onboarding", { replace: true });
+      if (session) navigate("/projects", { replace: true });
     });
   }, [navigate]);
 
@@ -47,10 +47,10 @@ const Auth = () => {
       if (tab === "signin") {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        if (data.session) {
-          await ensureProfile();
-          navigate("/onboarding", { replace: true });
-        }
+          if (data.session) {
+            await ensureProfile();
+            navigate("/projects", { replace: true });
+          }
       } else {
         if (!isPasswordValid) {
           setError("Password must be at least 8 characters");
@@ -62,10 +62,10 @@ const Auth = () => {
         }
         const { data, error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
-        if (data.session) {
-          await ensureProfile();
-          navigate("/onboarding", { replace: true });
-        } else {
+          if (data.session) {
+            await ensureProfile();
+            navigate("/projects", { replace: true });
+          } else {
           setConfirmNotice("Check your email to confirm your account.");
         }
       }
@@ -84,7 +84,7 @@ const Auth = () => {
     try {
       setLoading(true);
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/update-password`,
+        redirectTo: `${window.location.origin}/auth`,
       });
       if (error) throw error;
       toast({ title: "Password reset sent", description: "Check your email for the reset link." });

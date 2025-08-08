@@ -54,6 +54,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
             {/* Placeholder for org selector and user menu */}
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Organization</span>
+              <Link to="/auth/logout" className={cn(buttonVariants({ variant: "outline" }), "h-8")}>Sign out</Link>
             </div>
           </div>
         </header>

@@ -11,7 +11,7 @@ const AuthLogout = () => {
         cleanupAuthState();
         try { await supabase.auth.signOut({ scope: 'global' }); } catch {}
       } finally {
-        window.location.href = '/auth/login';
+        window.location.href = '/auth';
       }
     };
     run();

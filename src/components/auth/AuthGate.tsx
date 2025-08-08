@@ -1,11 +1,31 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/lib/supabaseClient";
 
 const AuthGate = ({ children }: { children: ReactNode }) => {
-  const { session, loading } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [hasSession, setHasSession] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!isMounted) return;
+      setHasSession(!!session);
+      setLoading(false);
+    });
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!isMounted) return;
+      setHasSession(!!session);
+      setLoading(false);
+    });
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
   if (loading) return null;
-  if (!session) return <Navigate to="/auth" replace />;
+  if (!hasSession) return <Navigate to="/auth" replace />;
   return <>{children}</>;
 };
 
