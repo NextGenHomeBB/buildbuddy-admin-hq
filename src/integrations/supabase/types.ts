@@ -14,6 +14,87 @@ export type Database = {
   }
   public: {
     Tables: {
+      attachments: {
+        Row: {
+          created_at: string
+          file_name: string
+          id: string
+          org_id: string | null
+          project_id: string
+          task_id: string | null
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          id?: string
+          org_id?: string | null
+          project_id: string
+          task_id?: string | null
+          url: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          id?: string
+          org_id?: string | null
+          project_id?: string
+          task_id?: string | null
+          url?: string
+        }
+        Relationships: []
+      }
+      budget_lines: {
+        Row: {
+          amount: number | null
+          budget_id: string
+          created_at: string
+          id: string
+          name: string
+          org_id: string | null
+        }
+        Insert: {
+          amount?: number | null
+          budget_id: string
+          created_at?: string
+          id?: string
+          name: string
+          org_id?: string | null
+        }
+        Update: {
+          amount?: number | null
+          budget_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          org_id?: string | null
+        }
+        Relationships: []
+      }
+      budgets: {
+        Row: {
+          created_at: string
+          id: string
+          org_id: string
+          project_id: string
+          total_amount: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          org_id: string
+          project_id: string
+          total_amount?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          org_id?: string
+          project_id?: string
+          total_amount?: number | null
+        }
+        Relationships: []
+      }
       checklist_items: {
         Row: {
           checklist_id: string
@@ -114,6 +195,57 @@ export type Database = {
           },
         ]
       }
+      clients: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          org_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          org_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          org_id?: string
+        }
+        Relationships: []
+      }
+      cross_org_timesheets: {
+        Row: {
+          approved_by_client: boolean
+          created_at: string
+          date: string
+          id: string
+          match_id: string
+          minutes: number
+          worker_user_id: string
+        }
+        Insert: {
+          approved_by_client?: boolean
+          created_at?: string
+          date: string
+          id?: string
+          match_id: string
+          minutes: number
+          worker_user_id: string
+        }
+        Update: {
+          approved_by_client?: boolean
+          created_at?: string
+          date?: string
+          id?: string
+          match_id?: string
+          minutes?: number
+          worker_user_id?: string
+        }
+        Relationships: []
+      }
       feedback: {
         Row: {
           created_at: string
@@ -151,6 +283,222 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      intercompany_contracts: {
+        Row: {
+          client_org_id: string
+          created_at: string
+          id: string
+          terms: Json | null
+          vendor_org_id: string
+        }
+        Insert: {
+          client_org_id: string
+          created_at?: string
+          id?: string
+          terms?: Json | null
+          vendor_org_id: string
+        }
+        Update: {
+          client_org_id?: string
+          created_at?: string
+          id?: string
+          terms?: Json | null
+          vendor_org_id?: string
+        }
+        Relationships: []
+      }
+      invoice_lines: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string
+          id: string
+          invoice_id: string
+          org_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description: string
+          id?: string
+          invoice_id: string
+          org_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string
+          id?: string
+          invoice_id?: string
+          org_id?: string | null
+        }
+        Relationships: []
+      }
+      invoices: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          id: string
+          org_id: string
+          status: string
+          total: number | null
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          org_id: string
+          status?: string
+          total?: number | null
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          org_id?: string
+          status?: string
+          total?: number | null
+        }
+        Relationships: []
+      }
+      labor_matches: {
+        Row: {
+          created_at: string
+          id: string
+          offer_id: string
+          request_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          offer_id: string
+          request_id: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          offer_id?: string
+          request_id?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      labor_offers: {
+        Row: {
+          available_from: string | null
+          available_to: string | null
+          created_at: string
+          id: string
+          org_id_vendor: string
+          profile_id: string
+        }
+        Insert: {
+          available_from?: string | null
+          available_to?: string | null
+          created_at?: string
+          id?: string
+          org_id_vendor: string
+          profile_id: string
+        }
+        Update: {
+          available_from?: string | null
+          available_to?: string | null
+          created_at?: string
+          id?: string
+          org_id_vendor?: string
+          profile_id?: string
+        }
+        Relationships: []
+      }
+      labor_profiles: {
+        Row: {
+          certs: Json | null
+          created_at: string
+          id: string
+          org_id: string
+          skills: Json | null
+          user_id: string
+        }
+        Insert: {
+          certs?: Json | null
+          created_at?: string
+          id?: string
+          org_id: string
+          skills?: Json | null
+          user_id: string
+        }
+        Update: {
+          certs?: Json | null
+          created_at?: string
+          id?: string
+          org_id?: string
+          skills?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      labor_requests: {
+        Row: {
+          created_at: string
+          id: string
+          needed_from: string | null
+          needed_to: string | null
+          org_id_client: string
+          project_id: string | null
+          qty: number
+          role: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          needed_from?: string | null
+          needed_to?: string | null
+          org_id_client: string
+          project_id?: string | null
+          qty?: number
+          role: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          needed_from?: string | null
+          needed_to?: string | null
+          org_id_client?: string
+          project_id?: string | null
+          qty?: number
+          role?: string
+        }
+        Relationships: []
+      }
+      materials: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          org_id: string
+          sku: string | null
+          unit: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          org_id: string
+          sku?: string | null
+          unit?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          org_id?: string
+          sku?: string | null
+          unit?: string | null
+        }
+        Relationships: []
       }
       messages: {
         Row: {
@@ -244,6 +592,51 @@ export type Database = {
           id?: string
           name?: string
           whatsapp_phone?: string | null
+        }
+        Relationships: []
+      }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          invoice_id: string
+          org_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          invoice_id: string
+          org_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          invoice_id?: string
+          org_id?: string
+        }
+        Relationships: []
+      }
+      phase_templates: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          org_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          org_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          org_id?: string
         }
         Relationships: []
       }
@@ -429,27 +822,33 @@ export type Database = {
       project_phases: {
         Row: {
           created_at: string
+          end_date: string | null
           id: string
           name: string
           org_id: string
           project_id: string
           seq: number
+          start_date: string | null
         }
         Insert: {
           created_at?: string
+          end_date?: string | null
           id?: string
           name: string
           org_id: string
           project_id: string
           seq?: number
+          start_date?: string | null
         }
         Update: {
           created_at?: string
+          end_date?: string | null
           id?: string
           name?: string
           org_id?: string
           project_id?: string
           seq?: number
+          start_date?: string | null
         }
         Relationships: [
           {
@@ -541,6 +940,147 @@ export type Database = {
           },
         ]
       }
+      purchase_orders: {
+        Row: {
+          created_at: string
+          id: string
+          org_id: string
+          status: string
+          total: number | null
+          vendor: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          org_id: string
+          status?: string
+          total?: number | null
+          vendor: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          org_id?: string
+          status?: string
+          total?: number | null
+          vendor?: string
+        }
+        Relationships: []
+      }
+      rate_cards: {
+        Row: {
+          created_at: string
+          currency: string
+          hourly_eur: number
+          id: string
+          org_id: string
+          profile_id: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          hourly_eur: number
+          id?: string
+          org_id: string
+          profile_id: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          hourly_eur?: number
+          id?: string
+          org_id?: string
+          profile_id?: string
+        }
+        Relationships: []
+      }
+      settlements: {
+        Row: {
+          contract_id: string
+          created_at: string
+          id: string
+          period_end: string
+          period_start: string
+          subtotal: number | null
+          total: number | null
+          vat: number | null
+        }
+        Insert: {
+          contract_id: string
+          created_at?: string
+          id?: string
+          period_end: string
+          period_start: string
+          subtotal?: number | null
+          total?: number | null
+          vat?: number | null
+        }
+        Update: {
+          contract_id?: string
+          created_at?: string
+          id?: string
+          period_end?: string
+          period_start?: string
+          subtotal?: number | null
+          total?: number | null
+          vat?: number | null
+        }
+        Relationships: []
+      }
+      shifts: {
+        Row: {
+          created_at: string
+          end_at: string | null
+          id: string
+          org_id: string
+          project_id: string | null
+          start_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          end_at?: string | null
+          id?: string
+          org_id: string
+          project_id?: string | null
+          start_at: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          end_at?: string | null
+          id?: string
+          org_id?: string
+          project_id?: string | null
+          start_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      task_assignments: {
+        Row: {
+          assignee_user_id: string
+          created_at: string
+          id: string
+          org_id: string | null
+          task_id: string
+        }
+        Insert: {
+          assignee_user_id: string
+          created_at?: string
+          id?: string
+          org_id?: string | null
+          task_id: string
+        }
+        Update: {
+          assignee_user_id?: string
+          created_at?: string
+          id?: string
+          org_id?: string | null
+          task_id?: string
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
           assignee: string | null
@@ -549,6 +1089,7 @@ export type Database = {
           id: string
           org_id: string | null
           phase_id: string | null
+          planned_hours: number | null
           project_id: string
           seq: number
           status: string
@@ -561,6 +1102,7 @@ export type Database = {
           id?: string
           org_id?: string | null
           phase_id?: string | null
+          planned_hours?: number | null
           project_id: string
           seq?: number
           status?: string
@@ -573,6 +1115,7 @@ export type Database = {
           id?: string
           org_id?: string | null
           phase_id?: string | null
+          planned_hours?: number | null
           project_id?: string
           seq?: number
           status?: string
@@ -657,6 +1200,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      worker_locations: {
+        Row: {
+          created_at: string
+          id: string
+          lat: number
+          lng: number
+          org_id: string
+          project_id: string | null
+          recorded_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lat: number
+          lng: number
+          org_id: string
+          project_id?: string | null
+          recorded_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lat?: number
+          lng?: number
+          org_id?: string
+          project_id?: string | null
+          recorded_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {
