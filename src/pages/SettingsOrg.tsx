@@ -138,7 +138,7 @@ const SettingsOrg = () => {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="ACME Builders"
-                disabled={loadingOrg}
+                disabled={loadingOrg || !activeOrgId}
               />
             </div>
 
@@ -148,11 +148,11 @@ const SettingsOrg = () => {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="31612345678"
-                disabled={loadingOrg}
+                disabled={loadingOrg || !activeOrgId}
               />
             </div>
 
-            {link && (
+            {link && activeOrgId && (
               <div className="md:col-span-2 text-sm">
                 Deep link:{" "}
                 <a className="underline" href={link} target="_blank" rel="noreferrer">
@@ -162,7 +162,7 @@ const SettingsOrg = () => {
             )}
 
             <div className="md:col-span-2">
-              <Button onClick={onSave} disabled={loading || loadingOrg || !isDirty}>
+              <Button onClick={onSave} disabled={loading || loadingOrg || !activeOrgId || !isDirty}>
                 {loading ? "Saving…" : "Save"}
               </Button>
             </div>

@@ -66,6 +66,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
           </div>
           {children}
         </main>
+        <OrgSetupModal />
       </SidebarInset>
     </SidebarProvider>
   );
