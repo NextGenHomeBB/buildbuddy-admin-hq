@@ -8,11 +8,15 @@ import { Plus } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 const Projects = () => {
-  const { needsOrgSetup, createOrganization } = useAuth();
+  const { needsOrgSetup, createOrganization, activeOrgId } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [orgName, setOrgName] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
 
   const handleCreateOrg = async () => {
     try {
@@ -50,7 +54,7 @@ const Projects = () => {
                 <h1 className="text-3xl font-semibold">Projects</h1>
                 <p className="text-muted-foreground mt-1">Create and track projects across sites.</p>
               </div>
-              <Button variant="hero"><Plus /> Create Project</Button>
+              <Button variant="hero" disabled={isCreating} onClick={async () => { if (!activeOrgId) { toast({ title: "No organization", description: "Select or create an organization first.", variant: "destructive" }); return; } const name = window.prompt("Project name"); if (!name || !name.trim()) return; setIsCreating(true); const { data, error } = await supabase.from("projects").insert({ name: name.trim(), org_id: activeOrgId }).select("id").single(); if (error) { toast({ title: "Failed to create project", description: error.message, variant: "destructive" }); } else { toast({ title: "Project created" }); navigate(`/projects/${data.id}`); } setIsCreating(false); }}><Plus /> Create Project</Button>
             </div>
 
             <Card>
