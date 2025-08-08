@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -262,7 +261,7 @@ const ChecklistsTab = ({ projectId }: Props) => {
                 </TableRow>
               ))}
               {checklists && checklists.length === 0 && !isLoading && (
-                <TableRow><TableCell colSpan={2} className="text-muted-foreground">No checklists yet.</TableCell></Row>
+                <TableRow><TableCell colSpan={2} className="text-muted-foreground">No checklists yet.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
@@ -280,4 +279,3 @@ const ChecklistsTab = ({ projectId }: Props) => {
 };
 
 export default ChecklistsTab;
-
