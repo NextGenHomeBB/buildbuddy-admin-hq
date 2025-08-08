@@ -25,13 +25,20 @@ const CreateOrgModal = ({ open, forced = false, onClose }: CreateOrgModalProps) 
     if (!canSubmit || !user) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("organizations")
-        .insert({ name: name.trim(), created_by: user.id, whatsapp_phone: phone.trim() || null })
-        .select("id")
-        .single();
-      if (error) throw error;
-      setActiveOrgId(data.id);
+      // Create via RPC to ensure admin membership and avoid RLS issues
+      const { data: orgId, error: createError } = await supabase.rpc('create_org_with_admin', { org_name: name.trim() });
+      if (createError) throw createError;
+      if (!orgId) throw new Error('No organization id returned');
+      // Optional WhatsApp phone update
+      const phoneVal = phone.trim();
+      if (phoneVal) {
+        const { error: phoneError } = await supabase
+          .from('organizations')
+          .update({ whatsapp_phone: phoneVal })
+          .eq('id', orgId as string);
+        if (phoneError) throw phoneError;
+      }
+      setActiveOrgId(orgId as string);
       toast({ title: "Organization created", description: "Welcome to BuildBuddy!" });
       onClose?.();
       setName("");
